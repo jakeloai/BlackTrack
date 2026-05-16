@@ -1,0 +1,17 @@
+cloud.service:"azureCloud"
+cloud.service:"azureCloud" country:GB,US http.title:"swagger" http.status:200
+cloud.service:"azureCloud" http.status:200 country:GB,US -http.title:"Your Azure Function App is up and running." -http.title:"IIS Windows Server"
+cloud.provider:"Azure" country:GB,US http.status:200 http.title:"Index of /" ssl:true
+cloud.provider:"Azure" country:GB,US http.status:200 http.title:"Index of /"
+cloud.provider:"Azure" hostname:"cloudapp.net" http.status:200,302
+cloud.service:"AzureCloud" http.status:200 http.title:"api"
+
+cloud.provider:"Amazon"
+cloud.provider:"Amazon" http.status:200,302 http.title:"Index of /"
+cloud.provider:"Amazon" http.status:200 "aws" "key"
+cloud.provider:"Amazon" http.title:"Dashboard" http.status:200
+
+cloud.provider:"Google" http.status:200
+cloud.provider:"Oracle" http.status:200
+site:vps-*.vps.ovh.net
+cloud.provider:"DigitalOcean" http.status:200,302

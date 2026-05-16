@@ -1,0 +1,2 @@
+# BlackRequest Production Dependencies
+httpx

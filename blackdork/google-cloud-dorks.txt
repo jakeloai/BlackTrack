@@ -1,0 +1,67 @@
+site:blob.core.windows.net "keyword"
+site:"blob.core.windows.net" intext:"CONFIDENTIAL"
+site:*.core.windows.net intext:"TLP:RED"
+site:*.core.windows.net
+site:*.core.windows.net +blob
+site:*.core.windows.net +files -web -blob
+site:*.core.windows.net -web
+site:*.core.windows.net -web -blob -files
+site:*.core.windows.net inurl:dsts.dsts
+site:*.core.windows.net inurl:"term" -web
+site:*.blob.core.windows.net ext:xls | ext:xlsx (login | password | username)
+intext:connectionstring blob filetype:config
+intext:accountkey windows.net filetype:xml
+intext:storageaccountkey windows.net filetype:txt
+
+site:"s3-external-1.amazonaws.com" intext:CONFIDENTIAL
+site:"s3.amazonaws.com" intext:CONFIDENTIAL
+site:"s3.dualstack.us-east-1.amazonaws.com" intext:CONFIDENTIAL
+site:"s3-external-1.amazonaws.com" intext:"TOP SECRET"
+site:"s3.amazonaws.com" intext:"tlp:red"
+site:"s3.amazonaws.com" intext:"tlp:amber"
+site:s3.amazonaws.com example
+site:s3.amazonaws.com example.com
+site:s3.amazonaws.com example-com
+site:s3.amazonaws.com com.example
+site:s3.amazonaws.com com-example
+site:s3.amazonaws.com filetype:xls password
+site:http://s3.amazonaws.com intitle:index.of.bucket
+site:http://amazonaws.com inurl:".s3.amazonaws.com/"
+s3 site:amazonaws.com filetype:log
+site:http://trello.com "aws.amazon.com" "password"
+
+site:googleapis.com +commondatastorage
+site:.firebaseio.com "COMPANY NAME"
+inurl:bc.googleusercontent.com intitle:index of
+site:storage.googleapis.com
+site:console.cloud.google.com/storage/browser
+site:console.cloud.google.com/storage/browser/_details
+site:firebasestorage.googleapis.com
+
+site:appdomain.cloud
+site:appdomain.cloud +s3
+site:*cloud-object-storage.appdomain.cloud
+site:codeengine.appdomain.cloud
+site:containers.appdomain.cloud
+site:clb.appdomain.cloud
+site:apiconnect.appdomain.cloud
+site:cdn.appdomain.cloud
+site:lb.appdomain.cloud
+site:vmware.cloud.ibm.com
+site:appid.cloud.ibm.com
+site:ibmmarketingcloud.com
+
+site:notion.site "keyword"
+site:digitaloceanspaces.com "keyword"
+site:*.cloudfront.net "keyword"
+site:*.herokuapp.com "keyword"
+site:*.netlify.app "keyword"
+site:*.vercel.app "keyword"
+
+site:googleapis.com +commondatastorage
+site:.firebaseio.com "COMPANY NAME"
+inurl:bc.googleusercontent.com intitle:index of
+site:storage.googleapis.com
+Bucket list for a project - site:console.cloud.google.com/storage/browser
+Details for an object - site:console.cloud.google.com/storage/browser/_details
+site:firebasestorage.googleapis.com
