@@ -7,6 +7,10 @@ import sys
 import time
 import hashlib
 import re
+import warnings
+
+# 隱藏不安全 HTTPS 請求嘅警告
+warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE"]
 
@@ -281,7 +285,8 @@ def main():
     
     print("[*] Calibration session active: establishing stable signatures...")
     try:
-        with httpx.Client(timeout=6.0, follow_redirects=True) as sample_client:
+        # 已加入 verify=False 忽略校準時的 SSL 證書錯誤
+        with httpx.Client(timeout=6.0, follow_redirects=True, verify=False) as sample_client:
             start_baseline = time.time()
             baseline_res = sample_client.request(
                 method=base_method, url=target_url, headers=base_headers, content=base_body if base_body else None
@@ -300,7 +305,8 @@ def main():
         global abort_fuzzing
         queue = asyncio.Queue(maxsize=args.concurrency * 2)
         
-        async with httpx.AsyncClient() as client:
+        # 已加入 verify=False 忽略異步發包時的 SSL 證書錯誤
+        async with httpx.AsyncClient(verify=False) as client:
             workers = [
                 asyncio.create_task(worker(queue, client, target_url, base_body, args.output, args.sleep, args.max_errors))
                 for _ in range(args.concurrency)
