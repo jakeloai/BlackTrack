@@ -58,14 +58,23 @@ update_proxies() {
     done
 
     # Validation: Filter Elite proxies with latency < 800ms
-    # Using httpx to check connectivity to google and measure speed
     echo "[*] Validating proxies (Max Latency: 800ms)..."
+    
+    # Ensure the file exists to prevent bash redirection errors
+    touch "$ALIVE_PROXIES"
+    
     cat raw_proxies.txt | sort -u | httpx -silent -proxy-file stdin -u https://www.google.com -timeout 2 -p 80,443 -o "$ALIVE_PROXIES" > /dev/null 2>&1
     
-    local count=$(wc -l < "$ALIVE_PROXIES" 2>/dev/null || echo 0)
+    local count=0
+    # Safely check if file has content before counting
+    if [ -s "$ALIVE_PROXIES" ]; then
+        count=$(wc -l < "$ALIVE_PROXIES" 2>/dev/null || echo 0)
+    fi
+
     if [ "$count" -eq 0 ]; then
         echo "[!] No usable proxies found. Proceeding without proxy."
         USE_PROXY=false
+        rm -f "$ALIVE_PROXIES"
     else
         echo "[+] Proxy Pool Ready: $count active proxies."
     fi
@@ -142,7 +151,7 @@ echo "[*] Phase 2: Verifying alive assets with httpx..."
 httpx-toolkit -l "$ALL_TARGETS" -silent -rl "$RATE_LIMIT" $PROXY_FLAG -o "$ALIVE_TARGETS"
 
 # --- Phase 3: Adaptive Intelligence Execution ---
-SAMPLE_TARGET=$(head -n 1 "$ALIVE_TARGETS")
+SAMPLE_TARGET=$(head -n 1 "$ALIVE_TARGETS" 2>/dev/null)
 if [ -n "$SAMPLE_TARGET" ]; then
     detect_waf_and_adjust "$SAMPLE_TARGET"
 else
