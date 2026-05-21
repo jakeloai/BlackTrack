@@ -1,26 +1,27 @@
 # BlackTrack (bt)
 
-**Developer:** JakeLo
+**Developer:** JakeLo + Gemini
 
-**Version:** 2.0 (Adaptive Intelligence Update)
+**Version:** 3.1 (Enterprise Bug Bounty Edition)
 
-**Focus:** Continuous Asset Discovery, Stealth Operations, and Automated DAST Pipeline
+**Focus:** Continuous Asset Discovery, Stealth Operations, Automated DAST Pipeline, and Robust Workspace Management
 
 ## Overview
 
-**BlackTrack (bt)** is an advanced automated external reconnaissance framework designed for professional red teamers and bug bounty hunters. Version 2.0 introduces an **Adaptive Intelligence Engine** and a **Stealth Proxy Module**, allowing the tool to bypass modern WAFs and maintain high anonymity while tracking attack surface changes.
+**BlackTrack (bt)** is an advanced automated external reconnaissance framework designed for professional red teamers and bug bounty hunters. Version 3.1 elevates the tool with an **Adaptive Intelligence Engine**, a **Stealth Proxy Module**, and a **Secure Workspace Manager**, allowing the tool to bypass modern WAFs, maintain high anonymity, and seamlessly handle environmental inconsistencies (like APT vs. Go installations) while tracking attack surface changes.
 
 ## Pipeline Architecture
 
 BlackTrack orchestrates a sophisticated multi-stage pipeline:
 
-1. **Stealth Proxy Module:** Automatically fetches and validates high-speed (Latency < 800ms) Elite proxies to mask the scanner's origin.
-2. **Subdomain Enumeration:** Leveraging `subfinder` for multi-source, recursive discovery.
-3. **HTTP Validation:** Using `httpx-toolkit` with proxy rotation to filter active web services.
-4. **Adaptive Intelligence (The Sensor):** Automatically fingerprints WAFs (Cloudflare, Akamai, etc.) and adjusts scanning frequency, threads, and jitter dynamically.
-5. **Delta Analysis:** Identifying new attack surfaces via `comm` logic since the last operational cycle.
-6. **Deep Crawling:** Utilizing `Katana` with headless browsing and strict static-file filtering.
-7. **Vulnerability Scanning:** Executing `Nuclei` in DAST mode using adaptive rate-limiting and validated proxy pools.
+1. **Secure Workspace Management:** Creates ephemeral temporary directories for intermediate files that automatically self-destruct upon exit, ensuring zero disk bloat.
+2. **Stealth Proxy Module:** Automatically fetches and validates high-speed (Latency < 800ms) Elite proxies to mask the scanner's origin.
+3. **Subdomain Enumeration:** Leveraging `subfinder` for multi-source, recursive discovery.
+4. **HTTP Validation:** Utilizing a global binary detection engine to intelligently route through `httpx-toolkit` or `httpx` with proxy rotation to filter active web services.
+5. **Adaptive Intelligence (The Sensor):** Automatically fingerprints WAFs (Cloudflare, Akamai, etc.) and adjusts scanning frequency, threads, and jitter dynamically.
+6. **Delta Analysis:** Identifying new attack surfaces via `comm` logic since the last operational cycle.
+7. **Deep Crawling:** Utilizing `Katana` with headless browsing and strict static-file filtering.
+8. **Vulnerability Scanning:** Executing `Nuclei` in DAST mode using adaptive rate-limiting and validated proxy pools.
 
 ---
 
@@ -28,10 +29,10 @@ BlackTrack orchestrates a sophisticated multi-stage pipeline:
 
 ### 1. Run the Automated Installer
 
-The `install.sh` script handles Golang installation, dependency resolution (including `bc` for math operations), and path configuration. It must be run with `sudo`.
+The `install.sh` script handles Golang installation, modern dependency resolution (specifically patching `httpx-toolkit` for Kali Linux), and path configuration. It must be run with `sudo`.
 
 ```bash
-chmod +x install.sh
+chmod +x install.sh bt.sh
 sudo ./install.sh
 source ~/.bashrc
 
@@ -39,13 +40,13 @@ source ~/.bashrc
 
 ### 2. Configure Notifications
 
-BlackTrack supports direct Discord integration via Webhooks or through the `notify` tool configuration.
+BlackTrack supports direct Discord integration via Webhooks.
 
 **Manual Webhook Setup:**
-Edit the `bt.sh` file and paste your URL into the `DISCORD_WEBHOOK` variable:
+Edit the `bt.sh` file and paste your URL into the `DISCORD_WEBHOOK` variable at the top:
 
 ```bash
-DISCORD_WEBHOOK="https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"
+DISCORD_WEBHOOK="[https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN](https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN)"
 
 ```
 
@@ -55,10 +56,10 @@ DISCORD_WEBHOOK="https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"
 
 ### Adaptive Stealth Scan (Recommended)
 
-Run a scan with automatic proxy rotation and WAF-aware rate limiting:
+Run a scan with automatic proxy rotation, modern randomized User-Agents, and WAF-aware rate limiting:
 
 ```bash
-bt -r root_domains.txt -s wildcard_domains.txt -rl 20 -proxy
+./bt.sh -r root_domains.txt -s wildcard_domains.txt -rl 20 -proxy
 
 ```
 
@@ -67,7 +68,7 @@ bt -r root_domains.txt -s wildcard_domains.txt -rl 20 -proxy
 Isolate and scan only newly discovered assets since the previous run:
 
 ```bash
-bt -s targets.txt -cj -proxy
+./bt.sh -s targets.txt -cj -proxy
 
 ```
 
@@ -76,7 +77,7 @@ bt -s targets.txt -cj -proxy
 Override delta logic to rescan the entire infrastructure without proxy usage:
 
 ```bash
-bt -s targets.txt -f
+./bt.sh -s targets.txt -f
 
 ```
 
@@ -97,18 +98,22 @@ bt -s targets.txt -f
 
 ## Pro Tips by JakeLo
 
-* **Adaptive Scaling:** When BlackTrack detects a WAF, it automatically drops to a ultra-low thread count (2 threads) with high jitter. This significantly reduces the chance of IP blacklisting.
-* **Proxy Quality:** The validator checks proxies against Google; any proxy with latency higher than 800ms is discarded to ensure scan stability.
-* **Anonymity Check:** The tool strictly filters for Elite proxies. If a proxy adds `X-Forwarded-For` headers (Transparent Proxy), it is automatically rejected to protect your local IP.
+* **Adaptive Scaling:** When BlackTrack detects a WAF, it automatically drops to an ultra-low thread count (2 threads) with high jitter. This significantly reduces the chance of IP blacklisting.
+* **Environment Agnostic:** Don't worry about whether you installed `httpx` via Go or `httpx-toolkit` via Kali APT. Version 3.1 automatically detects your binary structure and uses the correct one to prevent `command not found` errors.
+* **Zero Disk Bloat:** All intermediate files (`katana_filtered.txt`, `alive_proxies.txt`, etc.) are now routed to a secure temporary directory (`/tmp/blacktrack_XXXXXX`) that completely deletes itself when the script finishes or is aborted.
 * **Zero Noise:** Static extensions like `.woff2`, `.svg`, and `.mp4` are filtered out during crawling to ensure the Nuclei engine focuses only on actionable endpoints.
 
 ## Output Files
 
-* `alive_proxies.txt`: Validated list of high-speed, high-anonymity proxies.
-* `all_targets_yesterday.txt`: Historical data for delta comparison.
-* `katana_filtered.txt`: Refined endpoint list ready for vulnerability analysis.
-* `nuclei_results.txt`: Final report of critical, high, and medium findings.
+All persistent output is now safely stored in the `bt_workspace/` directory in your current working path:
+
+* `bt_workspace/all_targets_yesterday.txt`: Historical data preserved for future cronjob/delta comparisons.
+* `bt_workspace/nuclei_results_YYYYMMDD_HHMMSS.txt`: Final timestamped report of critical, high, and medium findings.
+
+*(Note: Raw logs, proxy lists, and intermediate crawling data are automatically purged upon exit).*
 
 ## Disclaimer
 
 This tool is for authorized security testing only. The developer, JakeLo, is not responsible for any misuse or damage caused by this program. Users must comply with all local and international laws.
+
+```
