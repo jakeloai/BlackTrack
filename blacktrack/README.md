@@ -115,5 +115,3 @@ All persistent output is now safely stored in the `bt_workspace/` directory in y
 ## Disclaimer
 
 This tool is for authorized security testing only. The developer, JakeLo, is not responsible for any misuse or damage caused by this program. Users must comply with all local and international laws.
-
-```
