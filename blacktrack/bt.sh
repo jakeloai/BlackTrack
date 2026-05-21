@@ -3,8 +3,9 @@
 # ==============================================================================
 # Developer: JakeLo
 # Tool Name: BlackTrack (bt)
-# Version: 3.0 (Enterprise Bug Bounty Edition)
+# Version: 3.1 (Enterprise Bug Bounty Edition)
 # Upgrades: Robust Error Handling, Temp Workspaces, Logging, UA Randomization
+# Fixes: Global HTTPX_BIN detection, NBSP cleanup
 # ==============================================================================
 
 # Strict mode: Exit on error, trap pipe failures
@@ -45,6 +46,16 @@ USER_AGENTS=(
 )
 RANDOM_UA=${USER_AGENTS[$RANDOM % ${#USER_AGENTS[@]}]}
 
+# --- Global Binary Detection ---
+# Ensure we use httpx-toolkit if installed via Kali APT, else fallback to httpx
+if command -v httpx-toolkit &> /dev/null; then 
+    HTTPX_BIN="httpx-toolkit"
+elif command -v httpx &> /dev/null; then 
+    HTTPX_BIN="httpx"
+else
+    HTTPX_BIN="httpx-toolkit" # default to toolkit for error messages
+fi
+
 # --- Core Functions ---
 
 # Cleanup Function executed on exit
@@ -62,13 +73,9 @@ log_success() { echo -e "\e[32m[$(date +'%H:%M:%S')] [+] $1\e[0m"; }
 
 # Tool Check Function
 check_dependencies() {
-    local tools=("subfinder" "httpx" "httpx-toolkit" "katana" "nuclei" "curl")
+    local tools=("subfinder" "$HTTPX_BIN" "katana" "nuclei" "curl")
     for tool in "${tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
-            # Special bypass for httpx/httpx-toolkit alias issue
-            if [[ "$tool" == "httpx-toolkit" ]] && command -v httpx &> /dev/null; then
-                continue
-            fi
             log_err "$tool is not installed or not in PATH."
         fi
     done
@@ -79,7 +86,7 @@ NUCLEI_TEMPLATES=$(nuclei -td 2>/dev/null || echo "$HOME/nuclei-templates")
 
 # Help Menu
 show_help() {
-    echo "BlackTrack (bt) - Developed by JakeLo | Version 3.0"
+    echo "BlackTrack (bt) - Developed by JakeLo | Version 3.1"
     echo "=================================================="
     echo "Usage: ./bt.sh [options]"
     echo ""
@@ -105,16 +112,16 @@ update_proxies() {
         curl -s -m 10 "$src" >> "$raw_proxies" || true
     done
 
-    log_info "Validating proxies (Max Latency: 800ms)..."
+    log_info "Validating proxies (Max Latency: 800ms) using $HTTPX_BIN..."
     
-    # Catch empty proxy list scenario gracefully
     if [ ! -s "$raw_proxies" ]; then
         log_warn "Failed to fetch any raw proxies."
         USE_PROXY=false
         return
     fi
 
-    cat "$raw_proxies" | sort -u | httpx -silent -proxy-file stdin -u https://www.google.com -timeout 2 -p 80,443 -o "$ALIVE_PROXIES" > /dev/null 2>&1 || true
+    # Fixed: Now using $HTTPX_BIN instead of hardcoded 'httpx'
+    cat "$raw_proxies" | sort -u | $HTTPX_BIN -silent -proxy-file stdin -u https://www.google.com -timeout 2 -p 80,443 -o "$ALIVE_PROXIES" > /dev/null 2>&1 || true
     
     local count=0
     if [ -s "$ALIVE_PROXIES" ]; then
@@ -201,18 +208,15 @@ fi
 ALL_TARGETS="$TMP_DIR/all_targets_raw.txt"
 ALIVE_TARGETS="$TMP_DIR/alive_targets.txt"
 
-# Consolidate uniquely, suppressing cat errors if files are empty/missing
 cat "$ROOT_FILE" "$SUB_FILE" "$SUB_RESULT" 2>/dev/null | sort -u > "$ALL_TARGETS" || true
 
 if [ ! -s "$ALL_TARGETS" ]; then
     log_err "No targets loaded. Check your input files."
 fi
 
-log_info "Phase 2: Verifying alive assets with httpx..."
-# Using HTTPX (falling back to toolkit alias if configured that way on your OS)
-HTTPX_BIN="httpx"
-if command -v httpx-toolkit &> /dev/null; then HTTPX_BIN="httpx-toolkit"; fi
+log_info "Phase 2: Verifying alive assets with $HTTPX_BIN..."
 
+# Fixed: Using the globally detected $HTTPX_BIN
 $HTTPX_BIN -l "$ALL_TARGETS" -silent -rl "$RATE_LIMIT" -H "User-Agent: $RANDOM_UA" $PROXY_FLAG -o "$ALIVE_TARGETS" > /dev/null 2>&1 || true
 
 if [ ! -s "$ALIVE_TARGETS" ]; then
@@ -250,10 +254,8 @@ KATANA_FILTERED="$TMP_DIR/katana_filtered.txt"
 katana -list "$SCAN_TARGET" -resume -d 5 -js-crawl -jsluice -kf all -path-climb -hh -system-chrome -nos -xhr -rl "$ADAPTIVE_RL" -fs rdn -tlsi -H "User-Agent: $RANDOM_UA" $PROXY_FLAG -o "$KATANA_RAW" -silent > /dev/null 2>&1 || true
 
 if [ -s "$KATANA_RAW" ]; then
-    # Filter interesting paths and avoid static junk
     grep -aEi -v "\.(png|jpg|jpeg|gif|svg|ico|css|woff|woff2|ttf|otf|mp4|txt|pdf|js)$" "$KATANA_RAW" | sort -u > "$KATANA_FILTERED" || true
 else
-    # Fallback if Katana fails/finds nothing: scan the root domains directly
     cp "$SCAN_TARGET" "$KATANA_FILTERED"
 fi
 
@@ -265,7 +267,6 @@ fi
 log_info "Phase 6: Launching Nuclei Engine..."
 NUCLEI_OUTPUT="$TMP_DIR/nuclei_results_tmp.txt"
 
-# Update templates silently, don't fail script if it times out
 nuclei -up -silent > /dev/null 2>&1 || true
 
 nuclei -list "$KATANA_FILTERED" \
@@ -286,7 +287,6 @@ cp "$ALIVE_TARGETS" "$YESTERDAY"
 if [ -f "$NUCLEI_OUTPUT" ] && [ -s "$NUCLEI_OUTPUT" ]; then
     log_warn "ALERT: Vulnerabilities discovered!"
     
-    # Save a permanent copy of the results
     cp "$NUCLEI_OUTPUT" "$FINAL_VULNS"
     log_success "Results saved to: $FINAL_VULNS"
     
