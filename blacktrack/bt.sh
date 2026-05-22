@@ -295,7 +295,7 @@ if [ -f "$NUCLEI_OUTPUT" ] && [ -s "$NUCLEI_OUTPUT" ]; then
     if [ -n "$DISCORD_WEBHOOK" ]; then
         log_info "Dispatching Discord notification..."
         VULN_COUNT=$(wc -l < "$FINAL_VULNS")
-        MSG="🚨 **[BlackTrack] Scan Completed**\nTarget: \`$ROOT_FILE $SUB_FILE\`\nVulns Found: **$VULN_COUNT**\nDate: \`$(date)\`\nMode: $( [ "$CRON_MODE" = true ] && echo "Cron/Delta" || echo "Full Scan" )"
+        MSG=" **[BlackTrack] Scan Completed**\nTarget: \`$ROOT_FILE $SUB_FILE\`\nVulns Found: **$VULN_COUNT**\nDate: \`$(date)\`\nMode: $( [ "$CRON_MODE" = true ] && echo "Cron/Delta" || echo "Full Scan" )"
         curl -s -H "Content-Type: application/json" -X POST -d "{\"content\": \"$MSG\"}" "$DISCORD_WEBHOOK" > /dev/null || true
     fi
 else
