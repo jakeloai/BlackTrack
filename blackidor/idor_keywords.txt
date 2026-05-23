@@ -1,0 +1,67 @@
+# --- Identity & Access ---
+id
+user_id
+uid
+account_id
+account
+member_id
+member
+profile_id
+profile
+employee_id
+emp_id
+
+# --- Multi-Tenant & Org Structure ---
+tenant_id
+tenant
+org_id
+organization_id
+org
+client_id
+client
+group_id
+group
+team_id
+team
+role_id
+role
+vendor_id
+merchant_id
+
+# --- Financial & Transactions ---
+invoice_id
+invoice
+order_id
+order
+receipt_id
+receipt
+transaction_id
+transaction
+payment_id
+payment
+card_id
+billing_id
+
+# --- Files & Assets ---
+file_id
+file
+doc_id
+doc
+document_id
+document
+report_id
+report
+ticket_id
+ticket
+attachment_id
+
+# --- System/Admin ---
+setting_id
+setting
+config_id
+device_id
+session_id
+token
+uuid
+api_key
+secret
