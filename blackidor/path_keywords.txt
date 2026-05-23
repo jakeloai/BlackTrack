@@ -1,0 +1,45 @@
+# --- Core User Context ---
+user
+account
+profile
+customer
+employee
+member
+
+# --- Admin & Management ---
+admin
+dashboard
+settings
+config
+tenant
+org
+organization
+client
+team
+group
+role
+manage
+setup
+
+# --- Transactions ---
+invoice
+order
+payment
+billing
+transaction
+receipt
+checkout
+
+# --- Asset Management ---
+file
+document
+doc
+report
+ticket
+api
+download
+export
+import
+upload
+logs
+backup
